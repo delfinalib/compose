@@ -7,9 +7,11 @@ ARG RUNTIME_DEBIAN_VERSION=stretch-20190708-slim
 
 ARG BUILD_PLATFORM=alpine
 
-FROM docker:${DOCKER_VERSION} AS docker-cli
+FROM delfinalib/raspberry-pi-alpine-docker AS docker-cli
 
-FROM python:${PYTHON_VERSION}-alpine${BUILD_ALPINE_VERSION} AS build-alpine
+FROM balenalib/raspberry-pi-alpine-python AS build-alpine
+
+RUN [ "cross-build-start" ]
 RUN apk add --no-cache \
     bash \
     build-base \
@@ -27,18 +29,8 @@ RUN apk add --no-cache \
     python2 \
     python2-dev \
     zlib-dev
+RUN [ "cross-build-end" ]
 ENV BUILD_BOOTLOADER=1
-
-FROM python:${PYTHON_VERSION}-${BUILD_DEBIAN_VERSION} AS build-debian
-RUN apt-get update && apt-get install -y \
-    curl \
-    gcc \
-    git \
-    libc-dev \
-    libgcc-6-dev \
-    make \
-    openssl \
-    python2.7-dev
 
 FROM build-${BUILD_PLATFORM} AS build
 COPY docker-compose-entrypoint.sh /usr/local/bin/
@@ -46,6 +38,7 @@ ENTRYPOINT ["sh", "/usr/local/bin/docker-compose-entrypoint.sh"]
 COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 WORKDIR /code/
 # FIXME(chris-crone): virtualenv 16.3.0 breaks build, force 16.2.0 until fixed
+RUN [ "cross-build-start" ]
 RUN pip install virtualenv==16.2.0
 RUN pip install tox==2.9.1
 
@@ -62,8 +55,9 @@ ARG GIT_COMMIT=unknown
 ENV DOCKER_COMPOSE_GITSHA=$GIT_COMMIT
 RUN script/build/linux-entrypoint
 
-FROM alpine:${RUNTIME_ALPINE_VERSION} AS runtime-alpine
-FROM debian:${RUNTIME_DEBIAN_VERSION} AS runtime-debian
+RUN [ "cross-build-end" ]
+
+FROM balenalib/raspberry-pi-alpine AS runtime-alpine
 FROM runtime-${BUILD_PLATFORM} AS runtime
 COPY docker-compose-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["sh", "/usr/local/bin/docker-compose-entrypoint.sh"]
