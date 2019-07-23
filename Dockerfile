@@ -57,7 +57,7 @@ RUN script/build/linux-entrypoint
 
 RUN [ "cross-build-end" ]
 
-FROM balenalib/raspberry-pi-alpine:3.7-3.7-run AS runtime-alpine
+FROM balenalib/raspberry-pi-alpine-python:3.7-3.7-run AS runtime-alpine
 FROM runtime-${BUILD_PLATFORM} AS runtime
 COPY docker-compose-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["sh", "/usr/local/bin/docker-compose-entrypoint.sh"]
