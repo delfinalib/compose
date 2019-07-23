@@ -9,7 +9,7 @@ ARG BUILD_PLATFORM=alpine
 
 FROM delfinalib/raspberry-pi-alpine-docker AS docker-cli
 
-FROM balenalib/raspberry-pi-alpine-python AS build-alpine
+FROM balenalib/raspberry-pi-alpine-python:3.7-3.7-build AS build-alpine
 
 RUN [ "cross-build-start" ]
 RUN apk add --no-cache \
@@ -57,7 +57,7 @@ RUN script/build/linux-entrypoint
 
 RUN [ "cross-build-end" ]
 
-FROM balenalib/raspberry-pi-alpine AS runtime-alpine
+FROM balenalib/raspberry-pi-alpine:3.7-3.7-run AS runtime-alpine
 FROM runtime-${BUILD_PLATFORM} AS runtime
 COPY docker-compose-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["sh", "/usr/local/bin/docker-compose-entrypoint.sh"]
